@@ -1,0 +1,13 @@
+joblib
+matplotlib
+numpy>=1.13
+numba>=0.35
+combo>=0.0.8
+scipy>=1.3.1
+scikit_learn>=0.20.0
+six
+statsmodels
+pyod>=0.9.4
+gpytorch>=1.5.0
+pytorch>=1.9.0
+botorch>=0.5.0
