@@ -2,6 +2,7 @@ import numpy as np
 import warnings
 from pyod.models.xgbod import xgbod
 
+
 class XGBOD(xgbod):
     def __init__(*args, **kwargs):
         super(XGBOD, self).__init__(*args, **kwargs)
@@ -12,8 +13,6 @@ class XGBOD(xgbod):
             from pyod.models.iforest import IForest
             self.estimator_list = [KNN(), LOF(), OCSVM(), IForest()]
 
+
 class LAMCTS():
     pass
-
-
-
