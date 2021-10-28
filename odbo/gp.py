@@ -1,8 +1,8 @@
 from __future__ import annotations
-
 from typing import Any, Dict, Optional
-
+import warnings
 import torch
+from torch import Tensor
 from botorch import settings
 from botorch.models import SingleTaskGP
 from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
@@ -19,27 +19,26 @@ from gpytorch.means.constant_mean import ConstantMean
 from gpytorch.models import ApproximateGP
 from gpytorch.module import Module
 from gpytorch.priors.torch_priors import GammaPrior
-from torch import Tensor
 from gpytorch.variational import CholeskyVariationalDistribution, VariationalStrategy
 
 
 class GP(SingleTaskGP):
-    def __init__(
-        self,
-        train_X: Tensor,
-        train_Y: Tensor,
-        likelihood: Optional[Likelihood] = None,
-        covar_module: Optional[Module] = None,
-        outcome_transform: Optional[OutcomeTransform] = None,
-        input_transform: Optional[InputTransform] = None,
-        min_inferred_noise_level: Optional[Float] = 1e-4
-    ) -> None:
-        noise_prior = GammaPrior(1.1, 0.05)
-        noise_prior_mode = (noise_prior.concentration - 1) / noise_prior.rate
-        likelihood = GaussianLikelihood(
-            noise_prior=noise_prior,
-            batch_shape=self._aug_batch_shape,
-            noise_constraint=GreaterThan(
+    def __init__(self,
+                 train_X: Tensor,
+                 train_Y: Tensor,
+                 likelihood: Optional[Likelihood] = None,
+                 covar_module: Optional[Module] = None,
+                 outcome_transform: Optional[OutcomeTransform] = None,
+                 input_transform: Optional[InputTransform] = None,
+                 min_inferred_noise_level: Optional[Float] = 1e-4) -> None:
+        if likelihood == None:
+            noise_prior = GammaPrior(1.1, 0.05)
+            noise_prior_mode = (
+                noise_prior.concentration - 1) / noise_prior.rate
+            likelihood = GaussianLikelihood(
+                noise_prior=noise_prior,
+                batch_shape=self._aug_batch_shape,
+                noise_constraint=GreaterThan(
                     self._min_inferred_noise_level,
                     transform=None,
                     initial_value=noise_prior_mode,
@@ -50,20 +49,17 @@ class GP(SingleTaskGP):
 
 
 class StudentTGP(BatchedMultiOutputGPyTorchModel, ApproximateGP):
-    def __init__(
-        self,
-        train_X: Tensor,
-        train_Y: Tensor,
-        likelihood: Optional[Likelihood] = None,
-        covar_module: Optional[Module] = None,
-        outcome_transform: Optional[OutcomeTransform] = None,
-        input_transform: Optional[InputTransform] = None,
-        min_inferred_noise_level: Optional[Float] = 1e-4
-    ) -> None:
+    def __init__(self,
+                 train_X: Tensor,
+                 train_Y: Tensor,
+                 likelihood: Optional[Likelihood] = None,
+                 covar_module: Optional[Module] = None,
+                 outcome_transform: Optional[OutcomeTransform] = None,
+                 input_transform: Optional[InputTransform] = None,
+                 min_inferred_noise_level: Optional[Float] = 1e-4) -> None:
         with torch.no_grad():
             transformed_X = self.transform_inputs(
-                X=train_X, input_transform=input_transform
-            )
+                X=train_X, input_transform=input_transform)
         if outcome_transform is not None:
             train_Y, _ = outcome_transform(train_Y)
         self._validate_tensor_args(X=transformed_X, Y=train_Y)
@@ -72,7 +68,8 @@ class StudentTGP(BatchedMultiOutputGPyTorchModel, ApproximateGP):
         train_X, train_Y, _ = self._transform_tensor_args(X=train_X, Y=train_Y)
         if likelihood is None:
             noise_prior = GammaPrior(1.1, 0.05)
-            noise_prior_mode = (noise_prior.concentration - 1) / noise_prior.rate
+            noise_prior_mode = (
+                noise_prior.concentration - 1) / noise_prior.rate
             likelihood = StudentTLikelihood(
                 noise_prior=noise_prior,
                 batch_shape=self._aug_batch_shape,
@@ -84,10 +81,13 @@ class StudentTGP(BatchedMultiOutputGPyTorchModel, ApproximateGP):
             )
         else:
             self._is_custom_likelihood = True
-        variational_distribution = CholeskyVariationalDistribution(train_X.size(0))
+        variational_distribution = CholeskyVariationalDistribution(
+            train_X.size(0))
         variational_strategy = VariationalStrategy(
-            self, train_X, variational_distribution, learn_inducing_locations=False
-        )
+            self,
+            train_X,
+            variational_distribution,
+            learn_inducing_locations=False)
         ApproximateGP.__init__(self, variational_strategy)
 
         self.mean_module = ConstantMean(batch_shape=self._aug_batch_shape)
@@ -124,9 +124,8 @@ class StudentTGP(BatchedMultiOutputGPyTorchModel, ApproximateGP):
         return MultivariateNormal(mean_x, covar_x)
 
     @classmethod
-    def construct_inputs(
-        cls, training_data: TrainingData, **kwargs: Any
-    ) -> Dict[str, Any]:
+    def construct_inputs(cls, training_data: TrainingData,
+                         **kwargs: Any) -> Dict[str, Any]:
         r"""Construct kwargs for the `Model` from `TrainingData` and other options.
 
         Args:
@@ -135,4 +134,3 @@ class StudentTGP(BatchedMultiOutputGPyTorchModel, ApproximateGP):
             **kwargs: None expected for this class.
         """
         return {"train_X": training_data.X, "train_Y": training_data.Y}
-
