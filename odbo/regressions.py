@@ -4,11 +4,31 @@ import gpytorch
 from botorch.fit import fit_gpytorch_model
 from .gp import StudentTGP, GP
 
+def GPRegression(X,
+                 Y,
+                 noise_constraint=gpytorch.constraints.Interval(1e-6, 1e-2),
+                 min_inferred_noise_level=1e-4,
+                 **kwargs):
+    from gpytorch.mlls import ExactMarginalLogLikelihood
+    from gpytorch.likelihoods import GaussianLikelihood
+    from botorch.fit import fit_gpytorch_model
+    likelihood = GaussianLikelihood(noise_constraint)
+    model = GP(
+        X,
+        Y,
+        likelihood=likelihood,
+        min_inferred_noise_level=min_inferred_noise_level,
+        **kwargs)
+    mll = ExactMarginalLogLikelihood(model.likelihood, model)
+    fit_gpytorch_model(mll)
+    return model
+
 
 def RobustRegression(X,
                      Y,
                      noise_constraint=gpytorch.constraints.Interval(
                          1e-4, 1e-2),
+                     min_inferred_noise_level=1e-4,
                      optimizer=None,
                      maxiter=100,
                      thresh=0.001,
@@ -17,14 +37,15 @@ def RobustRegression(X,
     from gpytorch.mlls import VariationalELBO
     from gpytorch.likelihoods import StudentTLikelihood
     likelihood = StudentTLikelihood(noise_constraint=noise_constraint)
-    model = StudentTGP(X, Y, **kwargs)
+    model = StudentTGP(
+        X, Y, min_inferred_noise_level=min_inferred_noise_level, **kwargs)
     model.train()
     likelihood.train()
     mll = VariationalELBO(likelihood, model, Y.ravel().numel())
     lossvalues = []
     if optimizer == None:
         optimizer = torch.optim.Adam(model.parameters(), lr=0.1)
-        
+
     for i in range(maxiter):
         optimizer.zero_grad()
         output = model(X)
@@ -49,17 +70,3 @@ def RobustRegression(X,
                 outlier_ids.append(m)
     return model, inliers, outlier_ids
 
-
-def GPRegression(X,
-                 Y,
-                 noise_constraint=gpytorch.constraints.Interval(1e-4, 1e-2),
-                 **kwargs):
-    from gpytorch.mlls import ExactMarginalLogLikelihood
-    from gpytorch.likelihoods import GaussianLikelihood
-    from botorch.fit import fit_gpytorch_model
-    likelihood = GaussianLikelihood(noise_constraint)
-    model = GP(X, Y, likelihood=likelihood, **kwargs)
-    mll = ExactMarginalLogLikelihood(model.likelihood, model)
-    fit_gpytorch_model(mll)
-
-    return model

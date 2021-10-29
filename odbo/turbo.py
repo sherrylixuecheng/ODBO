@@ -11,7 +11,7 @@ class TurboState:
     dim: int
     batch_size: int
     length: list
-    n_trust_regions: int = 5
+    n_trust_regions: int = 1
     length_min: float = 0.5**7
     length_max: float = 1.6
     failure_counter: int = 0
@@ -59,8 +59,8 @@ def generate_batch(
         model,  # GP model
         X,  # Evaluated points on the domain [0, 1]^d
         Y,  # Function values
-        batch_size,
-        n_trust_regions,
+        n_trust_regions=1,
+        batch_size=1,
         X_pending=None,
         n_candidates=None,  # Number of candidates for Thompson sampling
         num_restarts=10,

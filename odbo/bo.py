@@ -6,7 +6,7 @@ import botorch.acquisition as acqf
 def generate_batch(model,
                    X,
                    Y,
-                   batch_size,
+                   batch_size=1,
                    X_pending=None,
                    n_candidates=None,
                    num_restarts=10,
