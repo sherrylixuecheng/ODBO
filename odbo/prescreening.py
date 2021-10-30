@@ -17,7 +17,7 @@ def sp_label(X, Y, thres=None, fraction=0.1):
 
 
 class XGBOD(xgbod):
-    def __init__(*args, **kwargs):
+    def __init__(self,*args, **kwargs):
         super(XGBOD, self).__init__(*args, **kwargs)
         if 'estimator_list' not in kwargs:
             from pyod.models.knn import KNN
