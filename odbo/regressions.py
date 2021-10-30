@@ -1,4 +1,4 @@
-import numpuy as np
+import numpy as np
 import torch
 import gpytorch
 from botorch.fit import fit_gpytorch_model
