@@ -58,7 +58,7 @@ def generate_batch(model,
                 acq,
                 choices=X_pending,
                 q=batch_size,
-                max_batch_size=raw_samples,
+                max_batch_size=2048,
                 **kwargs)
 
     return X_next, acq_value

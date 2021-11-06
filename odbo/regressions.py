@@ -2,17 +2,19 @@ import numpy as np
 import torch
 import gpytorch
 from botorch.fit import fit_gpytorch_model
+from botorch.optim.fit import fit_gpytorch_torch, fit_gpytorch_scipy
 from .gp import StudentTGP, GP
 
 def GPRegression(X,
                  Y,
+                 likelihood = None,
                  noise_constraint=gpytorch.constraints.Interval(1e-6, 1e-2),
                  min_inferred_noise_level=1e-4,
+                 optimizer='fit_gpytorch_scipy',
                  **kwargs):
     from gpytorch.mlls import ExactMarginalLogLikelihood
     from gpytorch.likelihoods import GaussianLikelihood
     from botorch.fit import fit_gpytorch_model
-    likelihood = GaussianLikelihood(noise_constraint)
     model = GP(
         X,
         Y,
@@ -20,7 +22,17 @@ def GPRegression(X,
         min_inferred_noise_level=min_inferred_noise_level,
         **kwargs)
     mll = ExactMarginalLogLikelihood(model.likelihood, model)
-    fit_gpytorch_model(mll)
+    if optimizer == 'fit_gpytorch_scipy' or optimizer is None:
+       mll.train()
+       fit_gpytorch_scipy(mll)
+       mll.eval()
+    elif optimizer == 'fit_gpytorch_torch':
+       mll.train()
+       fit_gpytorch_torch(mll, options={'maxiter': 500})
+       mll.eval()      
+    else:
+       fit_gpytorch_model(mll, optimizier = optimizer)
+       
     return model
 
 

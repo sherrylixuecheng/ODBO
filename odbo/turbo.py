@@ -169,3 +169,5 @@ def generate_batch(
                     **kwargs)
 
     return X_next_m, acq_value
+
+

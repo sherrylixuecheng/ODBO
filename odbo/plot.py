@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import warnings
 
 
 def plot_cm(true_labels, pred_labels, Y=None, cmap=None):
@@ -54,5 +55,50 @@ def plot_cm(true_labels, pred_labels, Y=None, cmap=None):
         cbar.ax.set_ylabel('Measurments', rotation=-90, va="bottom")
     ax.set_title("Confusion matrix plot for this experiment")
     fig.tight_layout()
-#    fig.show()
     return out_outlier, in_outlier, out_inlier, in_inlier
+
+
+def plot_hist(X, Y=None, mode='count'):
+    if Y is None and mode == 'measurement':
+        warnings.warn(
+            "'measurement' plotting mode require to have experimental measurement values Y"
+        )
+        mode = 'count'
+    fig, axs = plt.subplots(
+        1, X.shape[1], figsize=(8 * X.shape[1], 8), sharey=True)
+    for i in range(X.shape[1]):
+        if mode == 'count':
+            values = np.empty((len(categories), 2))
+        elif mode == 'measurements':
+            values = np.empty((len(categories), 3))
+
+        categories = list(set(X[:i]))
+        for j in range(len(categories)):
+            ids_vec = np.array(
+                [k for k, x in enumerate(X[:i]) if x == categories[j]])
+            values[j, 0] = categories[j]
+            if mode == 'count':
+                values[j, 1] = len(ids_vec)
+            elif mode == 'measurement':
+                values[j, 1] = np.mean(Y[ids_vec])
+                values[j, 2] = np.std(Y[ids_vec])
+        axs[i].bar(values[:, 0], values[:, 1])
+        if mode == 'measurement':
+            axs[i].errorbar(
+                values[:, 0],
+                values[:, 1],
+                yerr=values[:, 2],
+                fmt="o",
+                color="r")
+            if i == 0:
+                axs[i].set_ylabel('Measurements', fontsize=18)
+        elif mode == 'count':
+            if i == 0:
+                axs[i].set_ylabel('Counts', fontsize=18)
+        axs[i].set_title('Variable %d' % k, fontsize=24)
+        axs[i].set_xlabel('Categories', fontsize=24)
+        axs[i].set_xticklabels(labels=values[:, 0], fontsize=18)
+
+
+def plot_bo(Y, Y_std, methods=None, cmap=None):
+    pass
