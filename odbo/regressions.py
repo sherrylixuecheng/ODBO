@@ -80,5 +80,5 @@ def RobustRegression(X,
                 inlier_ids.append(m)
             else:
                 outlier_ids.append(m)
-    return model, inliers, outlier_ids
+    return model, inlier_ids, outlier_ids
 
