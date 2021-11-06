@@ -1,8 +1,10 @@
+import numpy as np
 import botorch
 import torch
 from gpytorch.utils.errors import NanError, NotPSDError
 from .regressions import GPRegression, RobustRegression
 from .utils import normalize_data
+
 
 def bo_design(X,
               Y,
@@ -46,32 +48,30 @@ def bo_design(X,
         Y=Y_norm,
         batch_size=batch_size,
         X_pending=X_pending_norm)
-    ids_keep, next_exp_id = [], None
+    next_exp_id = []
 
     if X_pending is not None:
         for i in range(X_pending.shape[0]):
-            if torch.equal(X_next.detach(),
-                           X_pending_norm[i:i + 1, :].detach()):
-                next_exp_id = i
-                if verbose == True:
-                    print("Next experiment to pick: ",
-                          X_pending[i, :].detach().numpy(),
-                          "Acqusition value: ",
-                          acq_value.detach().numpy())
-            else:
-                ids_keep.append(i)
-    return X_next, acq_value, next_exp_id, ids_keep
+            for j in range(batch_size):
+                if torch.equal(X_next[j:j + 1, :].detach(),
+                               X_pending_norm[i:i + 1, :].detach()):
+                    next_exp_id.append(i)
+        if verbose == True:
+            print("Next experiment to pick: ",X_next.detach().numpy(),
+                  "Acqusition value: ",acq_value.detach().numpy())
+
+    return X_next, acq_value, next_exp_id
 
 
-
-
-def turbo_design(state, X,
-              Y,
-              X_pending=None,
-              gp_method='gp_regression',
-              batch_size=1,
-              min_inferred_noise_level=1e-4,
-              verbose=False):
+def turbo_design(state,
+                 X,
+                 Y,
+                 n_trust_regions=1,
+                 X_pending=None,
+                 gp_method='gp_regression',
+                 batch_size=1,
+                 min_inferred_noise_level=1e-4,
+                 verbose=False):
     from .turbo import generate_batch
     X_norm, Y_norm, X_pending_norm, stats = normalize_data(
         X, Y, X_pending=X_pending)
@@ -102,24 +102,27 @@ def turbo_design(state, X,
             break
 
     X_next, acq_value = generate_batch(
+        state=state,
         model=gp_model,
         X=X_norm,
         Y=Y_norm,
+        n_trust_regions=n_trust_regions,
         batch_size=batch_size,
         X_pending=X_pending_norm)
-    ids_keep, next_exp_id = [], None
+    next_exp_id = []
 
     if X_pending is not None:
-        for i in range(X_pending.shape[0]):
-            if torch.equal(X_next.detach(),
-                           X_pending_norm[i:i + 1, :].detach()):
-                next_exp_id = i
-                if verbose == True:
-                    print("Next experiment to pick: ",
-                          X_pending[i, :].detach().numpy(),
-                          "Acqusition value: ",
-                          acq_value.detach().numpy())
-            else:
-                ids_keep.append(i)
-    return X_next, acq_value, next_exp_id, ids_keep
+        for t in range(n_trust_regions):
+            next_exp_id_m = []
+            for i in range(X_pending.shape[0]):
+                for j in range(batch_size):
+                    if torch.equal(X_next[t, j, :].detach().reshape(1, X_pending_norm.shape[1]),
+                                   X_pending_norm[i:i + 1, :].detach()):
+                        next_exp_id_m.append(i)
+            next_exp_id.append(next_exp_id_m)
+        if verbose == True:
+            print("Next experiment to pick: ", X_next.detach().numpy(),
+                  "Acqusition value: ", acq_value.detach().numpy())
+        next_exp_id = np.vstack(next_exp_id)
 
+    return X_next, acq_value, next_exp_id

@@ -13,7 +13,7 @@ class TurboState:
     length: list
     n_trust_regions: int = 1
     length_min: float = 0.5**7
-    length_max: float = 1.6
+    length_max: float = 6.4
     failure_counter: int = 0
     failure_tolerance: int = float("nan")  # Note: Post-initialized
     success_counter: int = 0
@@ -68,7 +68,7 @@ def generate_batch(
         acqfn="ei",
         **kwargs):
     dtype = X.dtype
-    device = X.get_device()
+    device = X.device
     assert X.min() >= 0.0 and X.max() <= 1.0 and torch.all(torch.isfinite(Y))
     if n_candidates is None:
         n_candidates = min(5000, max(2000, 200 * X.shape[-1]))
