@@ -16,7 +16,7 @@ def test_initial_design():
     X_pending = np.empty((500,5))
     for i in range(5):
         X_pending[:,i] = np.random.choice(range(7), 500)
-    X_sele = initialization.initial_design(X_pending, verbose = False)
+    sele = initialization.initial_design(X_pending, verbose = False)
 
 test_avg_measurement()
 test_initial_design()

@@ -1,7 +1,5 @@
 import numpy as np
 
-#Not done yet
-
 
 def initial_design(X_pending,
                    choice_list=None,
@@ -12,7 +10,7 @@ def initial_design(X_pending,
                    random_state=0):
     np.random.seed(random_state)
     if least_occurance == None:
-        least_occurance = 2 * np.ones(X_pending.shape[1])
+        least_occurance = np.ones(X_pending.shape[1])
     if choice_list == None:
         choice_list = []
         for i in range(X_pending.shape[1]):
@@ -40,7 +38,7 @@ def initial_design(X_pending,
         pending_scores = update_score(pending_scores, X_pending[update_indices, :], X_pending)
         if verbose == True:
             print('Current selected experiments: ', sele_indices[-1], 'Max pending score: ', np.max(pending_scores))
-    return X_pending[sele_indices, :]
+    return sele_indices
 
 
 def compute_score(current_X,
