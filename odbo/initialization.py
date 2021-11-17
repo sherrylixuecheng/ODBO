@@ -8,6 +8,7 @@ def initial_design(X_pending,
                    least_occurance=None,
                    target_num=None,
                    importance_method='sum',
+                   verbose = True,
                    random_state=0):
     np.random.seed(random_state)
     if least_occurance == None:
@@ -16,7 +17,7 @@ def initial_design(X_pending,
         choice_list = []
         for i in range(X_pending.shape[1]):
             choice_list.append(list(set(X_pending[:, i])))
-
+    N = X_pending.shape[0]
     abundance_scores = abundance(X_pending, choice_list)
     pending_scores = np.zeros(X_pending.shape)
     sele_indices = [np.argmax(np.sum(abundance_scores, axis = 1))]
@@ -26,15 +27,19 @@ def initial_design(X_pending,
                                        X_pending[pending_indices, :],
                                        least_occurance,
                                        choice_list)
+    if verbose == True:
+            print('Current selected experiments: ', sele_indices[-1], 'Max pending score: ', np.max(pending_scores))
+
     while True:
-        sum_scores = np.sum(np.multiply(pending_scores,abundance_scores), axis = 1) + 0.1* np.sum(pending_scores>0, axis=1)
+        sum_scores = np.sum(np.multiply(pending_scores, abundance_scores), axis = 1) + 0.1* np.sum(pending_scores>0, axis=1)
+        sum_scores[sele_indices] = -np.inf*np.ones(len(sele_indices))
         if np.max(pending_scores) <= 0.0 :
             break
-        update_indices = pending_indices[np.argmax(sum_scores)]
+        update_indices = np.argmax(sum_scores)
         sele_indices.append(update_indices)
         pending_scores = update_score(pending_scores, X_pending[update_indices, :], X_pending)
-        pending_scores[update_indices, :] = -np.inf*np.ones(pending_scores[update_indices, :].shape)
-
+        if verbose == True:
+            print('Current selected experiments: ', sele_indices[-1], 'Max pending score: ', np.max(pending_scores))
     return X_pending[sele_indices, :]
 
 
