@@ -44,7 +44,7 @@ def RobustRegression(X,
                      optimizer=None,
                      maxiter=100,
                      thresh=0.001,
-                     std_factor=1.5,
+                     std_factor=2,
                      **kwargs):
     from gpytorch.mlls import VariationalELBO
     from gpytorch.likelihoods import StudentTLikelihood

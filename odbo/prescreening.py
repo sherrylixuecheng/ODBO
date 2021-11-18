@@ -10,7 +10,6 @@ def sp_label(X, Y, thres=None, fraction=0.1):
         labels[sort_ids[0:int(len(Y) * fraction)]] = np.ones(
             int(len(Y) * fraction))
     else:
-        labels = np.zeros(len(Y))
         outlier = [k for k, x in enumerate(Y) if x <= thres]
         labels[outlier] = np.ones(len(outlier))
     return labels

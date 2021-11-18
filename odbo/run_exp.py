@@ -1,4 +1,5 @@
 import numpy as np
+import random
 import botorch
 import torch
 from gpytorch.utils.errors import NanError, NotPSDError
@@ -51,11 +52,16 @@ def bo_design(X,
     next_exp_id = []
 
     if X_pending is not None:
-        for i in range(X_pending.shape[0]):
-            for j in range(batch_size):
+        for j in range(batch_size):
+            tonext = []
+            for i in range(X_pending.shape[0]):
                 if torch.equal(X_next[j:j + 1, :].detach(),
                                X_pending_norm[i:i + 1, :].detach()):
-                    next_exp_id.append(i)
+                    tonext.append(i)
+            if len(tonext) > 1: 
+                tonext = [random.choice(tonext)]
+            next_exp_id.extend(tonext)
+            
         if verbose == True:
             print("Next experiment to pick: ",X_next.detach().numpy(),
                   "Acqusition value: ",acq_value.detach().numpy())

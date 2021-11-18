@@ -18,7 +18,7 @@ def initial_design(X_pending,
     N = X_pending.shape[0]
     abundance_scores = abundance(X_pending, choice_list)
     pending_scores = np.zeros(X_pending.shape)
-    sele_indices = [np.argmax(np.sum(abundance_scores, axis = 1))]
+    sele_indices = [np.argmax(np.sum(abundance_scores, axis = 1) - np.random.random_sample(N))]
     pending_indices = np.delete(range(N), sele_indices)
     pending_scores[sele_indices, :] = -np.inf*np.ones(pending_scores[sele_indices, :].shape)
     pending_scores[pending_indices, :] = compute_score(X_pending[sele_indices, :],
@@ -29,7 +29,8 @@ def initial_design(X_pending,
             print('Current selected experiments: ', sele_indices[-1], 'Max pending score: ', np.max(pending_scores))
 
     while True:
-        sum_scores = np.sum(np.multiply(pending_scores, abundance_scores), axis = 1) + 0.1* np.sum(pending_scores>0, axis=1)
+ #       sum_scores = np.sum(pending_scores, axis = 1) + 0.1* np.sum(pending_scores>0, axis=1)
+        sum_scores = np.sum(pending_scores, axis = 1) 
         sum_scores[sele_indices] = -np.inf*np.ones(len(sele_indices))
         if np.max(pending_scores) <= 0.0 :
             break
