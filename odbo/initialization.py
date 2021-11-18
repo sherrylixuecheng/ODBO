@@ -16,9 +16,9 @@ def initial_design(X_pending,
         for i in range(X_pending.shape[1]):
             choice_list.append(list(set(X_pending[:, i])))
     N = X_pending.shape[0]
-    abundance_scores = abundance(X_pending, choice_list)
+#    abundance_scores = abundance(X_pending, choice_list)
     pending_scores = np.zeros(X_pending.shape)
-    sele_indices = [np.argmax(np.sum(abundance_scores, axis = 1) - np.random.random_sample(N))]
+    sele_indices = [0]
     pending_indices = np.delete(range(N), sele_indices)
     pending_scores[sele_indices, :] = -np.inf*np.ones(pending_scores[sele_indices, :].shape)
     pending_scores[pending_indices, :] = compute_score(X_pending[sele_indices, :],
