@@ -1,3 +1,5 @@
+"""Gaussian process regressions"""
+
 from __future__ import annotations
 from typing import Any, Dict, Optional
 import warnings
@@ -23,6 +25,19 @@ from gpytorch.variational import CholeskyVariationalDistribution, VariationalStr
 
 
 class GP(BatchedMultiOutputGPyTorchModel, ExactGP):
+    """Exact single task Gaussian process regression.
+    Notes
+    -----
+    This implementation modifies the source codes from BoTorch by allowing changes 
+    of min_inferred_noise_level
+    (https://botorch.org/api/_modules/botorch/models/gp_regression.html#SingleTaskGP) 
+    References
+    ----------
+    M. Balandat, B. Karrer, D. R. Jiang, S. Daulton, B. Letham, A. G. Wilson, 
+    and E. Bakshy. BoTorch: A Framework for Efficient Monte-Carlo Bayesian 
+    Optimization. Advances in Neural Information Processing Systems 33, 2020.
+    """
+
     def __init__(self,
                  train_X: Tensor,
                  train_Y: Tensor,
@@ -31,10 +46,25 @@ class GP(BatchedMultiOutputGPyTorchModel, ExactGP):
                  outcome_transform: Optional[OutcomeTransform] = None,
                  input_transform: Optional[InputTransform] = None,
                  min_inferred_noise_level: Optional[Float] = 1e-4) -> None:
+        """
+        Args:
+            train_X: A `batch_shape x n x d` tensor of training features.
+            train_Y: A `batch_shape x n x m` tensor of training observations.
+            likelihood: A likelihood. If omitted, use a standard
+                GaussianLikelihood with inferred noise level.
+            covar_module: The module computing the covariance (Kernel) matrix.
+                If omitted, use a `MaternKernel`.
+            outcome_transform: An outcome transform that is applied to the
+                training data during instantiation and to the posterior during
+                inference (that is, the `Posterior` obtained by calling
+                `.posterior` on the model will be on the original scale).
+            input_transform: An input transform that is applied in the model's
+                forward pass.
+            min_inferred_noise_level: minimum value of added noises to kernel 
+        """
         with torch.no_grad():
             transformed_X = self.transform_inputs(
-                X=train_X, input_transform=input_transform
-            )
+                X=train_X, input_transform=input_transform)
         if outcome_transform is not None:
             train_Y, _ = outcome_transform(train_Y)
         self._validate_tensor_args(X=transformed_X, Y=train_Y)
@@ -44,7 +74,8 @@ class GP(BatchedMultiOutputGPyTorchModel, ExactGP):
         train_X, train_Y, _ = self._transform_tensor_args(X=train_X, Y=train_Y)
         if likelihood is None:
             noise_prior = GammaPrior(1.1, 0.05)
-            noise_prior_mode = (noise_prior.concentration - 1) / noise_prior.rate
+            noise_prior_mode = (
+                noise_prior.concentration - 1) / noise_prior.rate
             likelihood = GaussianLikelihood(
                 noise_prior=noise_prior,
                 batch_shape=self._aug_batch_shape,
@@ -91,13 +122,31 @@ class GP(BatchedMultiOutputGPyTorchModel, ExactGP):
         return MultivariateNormal(mean_x, covar_x)
 
     @classmethod
-    def construct_inputs(
-        cls, training_data: TrainingData, **kwargs: Any
-    ) -> Dict[str, Any]:
+    def construct_inputs(cls, training_data: TrainingData,
+                         **kwargs: Any) -> Dict[str, Any]:
+        """Construct kwargs for the `Model` from `TrainingData` and other options.
+
+        Args:
+            training_data: `TrainingData` container with data for single outcome
+                or for multiple outcomes for batched multi-output case.
+            **kwargs: None expected for this class.
+        """
         return {"train_X": training_data.X, "train_Y": training_data.Y}
 
 
 class StudentTGP(BatchedMultiOutputGPyTorchModel, ApproximateGP):
+    """Single task Gaussian process regression with student T likelihood
+    Notes
+    -----
+    This implementation refers to the source codes from BoTorch
+    (https://botorch.org/api/_modules/botorch/models/gp_regression.html#SingleTaskGP) 
+    References
+    ----------
+    M. Balandat, B. Karrer, D. R. Jiang, S. Daulton, B. Letham, A. G. Wilson, 
+    and E. Bakshy. BoTorch: A Framework for Efficient Monte-Carlo Bayesian 
+    Optimization. Advances in Neural Information Processing Systems 33, 2020.
+    """
+
     def __init__(self,
                  train_X: Tensor,
                  train_Y: Tensor,
@@ -106,6 +155,22 @@ class StudentTGP(BatchedMultiOutputGPyTorchModel, ApproximateGP):
                  outcome_transform: Optional[OutcomeTransform] = None,
                  input_transform: Optional[InputTransform] = None,
                  min_inferred_noise_level: Optional[Float] = 1e-4) -> None:
+        """
+        Args:
+            train_X: A `batch_shape x n x d` tensor of training features.
+            train_Y: A `batch_shape x n x m` tensor of training observations.
+            likelihood: A likelihood. If omitted, use a standard
+                GaussianLikelihood with inferred noise level.
+            covar_module: The module computing the covariance (Kernel) matrix.
+                If omitted, use a `MaternKernel`.
+            outcome_transform: An outcome transform that is applied to the
+                training data during instantiation and to the posterior during
+                inference (that is, the `Posterior` obtained by calling
+                `.posterior` on the model will be on the original scale).
+            input_transform: An input transform that is applied in the model's
+                forward pass.
+            min_inferred_noise_level: minimum value of added noises to kernel 
+        """
         with torch.no_grad():
             transformed_X = self.transform_inputs(
                 X=train_X, input_transform=input_transform)
@@ -175,7 +240,7 @@ class StudentTGP(BatchedMultiOutputGPyTorchModel, ApproximateGP):
     @classmethod
     def construct_inputs(cls, training_data: TrainingData,
                          **kwargs: Any) -> Dict[str, Any]:
-        r"""Construct kwargs for the `Model` from `TrainingData` and other options.
+        """Construct kwargs for the `Model` from `TrainingData` and other options.
 
         Args:
             training_data: `TrainingData` container with data for single outcome
