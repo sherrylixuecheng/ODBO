@@ -6,11 +6,34 @@ import numpy as np
 def initial_design(X_pending,
                    choice_list=None,
                    least_occurance=None,
-                   target_num=None,
-                   importance_method='sum',
                    verbose=True,
                    allow_abundance=False,
+                   importance_method='sum',
                    random_state=0):
+    """Generate the inital set of experimentes to collect measurements to initiate BO  
+    Parameters
+    ----------
+    X_pending : ndarray with shape of (n_pending_samples, feature_size)
+        Current search space of experimental design after featurziation. 
+        Features can be ints, floats and strings
+    choice_list : list of list, default=None
+        List of list of choices for each feature. Length of the list is the number of features
+    least_occurance : List of ints or an array of ints, default=None
+        Least occurance of each choice for each feature.
+    verbose : boolen, deafult=True,
+        Printout the current selected experiments
+    allow_abundance : boolen, deafult=True,
+        If allow using the abundance scores to pick less frequent choices first
+    importance_method : string, default='sum'
+        The importance score computation method
+    random_state : int, default=0
+        Random seed used in this algorithm
+    Returns
+    -------
+    sele_indices : List of ints
+        Selected indices of the input X_pending to be 0th round experiments for BO
+    """
+
     np.random.seed(random_state)
     if least_occurance == None:
         least_occurance = np.ones(X_pending.shape[1])
@@ -27,8 +50,8 @@ def initial_design(X_pending,
     pending_scores[sele_indices, :] = -np.inf * np.ones(
         pending_scores[sele_indices, :].shape)
     pending_scores[pending_indices, :] = compute_score(
-        X_pending[sele_indices, :], X_pending[pending_indices, :],
-        least_occurance, choice_list)
+        X_pending[sele_indices, :], X_pending[pending_indices, :], choice_list,
+        least_occurance, importance_method)
     if verbose == True:
         print('Current selected experiments: ', sele_indices[-1],
               'Max pending score: ', np.max(pending_scores))
@@ -54,9 +77,30 @@ def initial_design(X_pending,
 
 def compute_score(current_X,
                   X_pending,
-                  least_occurance,
                   choice_list,
+                  least_occurance,
                   importance_method='sum'):
+    """Comput scores of all the experiments in the search space
+    Parameters
+    ----------
+    current_X : ndarray with shape of (n_current_samples, feature_size)
+        Current selected experiments
+    X_pending : ndarray with shape of (n_pending_samples, feature_size)
+        Current search space of experimental design after featurziation. 
+        Features can be ints, floats and strings
+    choice_list : list of list, default=None
+        List of list of choices for each feature. Length of the list is the number of features.
+    least_occurance : List of ints or an array of ints, default=None
+        Least occurance of each choice for each feature.
+    importance_method : string, default='sum'
+        The importance score computation method
+
+    Returns
+    -------
+    scores : ndarray of (n_pending_samples, feature_size)  of floats
+        Importances scores of each choice of each feature
+    """
+
     scores = np.zeros(X_pending.shape)
     if importance_method == 'sum':
         for i in range(X_pending.shape[1]):
@@ -75,6 +119,22 @@ def compute_score(current_X,
 
 
 def update_score(pending_scores, update_X, X_pending):
+    """Update scores of all the experiments with knowing the newly selected experiments
+    Parameters
+    ----------
+    pending_scores : ndarray with shape of (n_pending_samples, feature_size) of floats
+        Scores from last round of selection
+    update_X : ndarray with shape of (1, feature_size)
+        Newly selected experiment
+    X_pending : ndarray with shape of (n_pending_samples, feature_size)
+        Current search space of experimental design after featurziation. 
+        Features can be ints, floats and strings
+    Returns
+    -------
+    pending_scores : ndarray of (n_pending_samples, feature_size)
+        Updated importances scores of each choice of each feature
+    """
+
     for i in range(X_pending.shape[1]):
         pending_id_no = np.where(X_pending[:, i] == update_X[i])[0]
         pending_scores[pending_id_no, i] = pending_scores[pending_id_no, i] - 1
@@ -82,6 +142,20 @@ def update_score(pending_scores, update_X, X_pending):
 
 
 def abundance(X_pending, choice_list):
+    """Abudnace scores of the experiments 
+    Parameters
+    ----------
+    X_pending : ndarray with shape of (n_pending_samples, feature_size)
+        Current search space of experimental design after featurziation. 
+        Features can be ints, floats and strings. 
+    choice_list : list of list, default=None
+        List of list of choices for each feature. Length of the list is number of features.
+    Returns
+    -------
+    abundance : ndarray of (n_pending_samples, feature_size)
+        Abundance scores using the frequency of each choice for each feature.
+    """
+
     N, feature_size = X_pending.shape[0], X_pending.shape[1]
     abundance = np.zeros(X_pending.shape)
     for i in range(feature_size):

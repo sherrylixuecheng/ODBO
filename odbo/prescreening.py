@@ -4,6 +4,24 @@ from pyod.models.xgbod import XGBOD as xgbod
 
 
 def sp_label(X, Y, thres=None, fraction=0.1):
+    """Get inlier (0) and outlier (1) for given X, y values
+    Parameters
+    ----------
+    X : ndarray with a shape of (n_training_samples, feature_size)
+        Current set of experiments.
+    Y : ndarray with a shape of (n_training_samples, 1) of floats
+        Current measurements using X experimental design. 
+    thres : float, default=None
+        Threshold used to select the inliers and outiers
+    fraction : float, default=0.1
+        If there is no threshold provided, the fraction of experiments can be 
+        outliers in the current experiments
+    Returns
+    -------
+    labels : ndarray of zero or one
+        Final vector for experiements marked as inliers and outliers
+    """
+
     labels = np.zeros(len(Y))
     if thres == None:
         sort_ids = np.argsort(Y)
@@ -16,7 +34,9 @@ def sp_label(X, Y, thres=None, fraction=0.1):
 
 
 class XGBOD(xgbod):
-    def __init__(self,*args, **kwargs):
+    """XGBOD class (pass to pyOD package)"""
+
+    def __init__(self, *args, **kwargs):
         super(XGBOD, self).__init__(*args, **kwargs)
         if 'estimator_list' not in kwargs:
             from pyod.models.knn import KNN

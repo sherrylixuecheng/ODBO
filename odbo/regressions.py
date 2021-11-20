@@ -1,3 +1,5 @@
+"""Regression algorithms"""
+
 import numpy as np
 import torch
 import gpytorch
@@ -5,13 +7,15 @@ from botorch.fit import fit_gpytorch_model
 from botorch.optim.fit import fit_gpytorch_torch, fit_gpytorch_scipy
 from .gp import StudentTGP, GP
 
+
 def GPRegression(X,
                  Y,
-                 likelihood = None,
+                 likelihood=None,
                  noise_constraint=gpytorch.constraints.Interval(1e-6, 1e-2),
                  min_inferred_noise_level=1e-4,
                  optimizer='fit_gpytorch_scipy',
                  **kwargs):
+
     from gpytorch.mlls import ExactMarginalLogLikelihood
     from gpytorch.likelihoods import GaussianLikelihood
     from botorch.fit import fit_gpytorch_model
@@ -23,16 +27,16 @@ def GPRegression(X,
         **kwargs)
     mll = ExactMarginalLogLikelihood(model.likelihood, model)
     if optimizer == 'fit_gpytorch_scipy' or optimizer is None:
-       mll.train()
-       fit_gpytorch_scipy(mll)
-       mll.eval()
+        mll.train()
+        fit_gpytorch_scipy(mll)
+        mll.eval()
     elif optimizer == 'fit_gpytorch_torch':
-       mll.train()
-       fit_gpytorch_torch(mll, options={'maxiter': 500})
-       mll.eval()      
+        mll.train()
+        fit_gpytorch_torch(mll, options={'maxiter': 500})
+        mll.eval()
     else:
-       fit_gpytorch_model(mll, optimizier = optimizer)
-       
+        fit_gpytorch_model(mll, optimizier=optimizer)
+
     return model
 
 
@@ -81,4 +85,3 @@ def RobustRegression(X,
             else:
                 outlier_ids.append(m)
     return model, inlier_ids, outlier_ids
-

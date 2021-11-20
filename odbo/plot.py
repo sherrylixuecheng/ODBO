@@ -4,6 +4,28 @@ import warnings
 
 
 def plot_cm(true_labels, pred_labels, Y=None, cmap=None):
+    """Plot the confusion matrix using heat map
+    Parameters
+    ----------
+    true_labels : list or array of zero or ones
+        True inliers (zeros) and outliers (ones)
+    pred_labels :  list or array of zero or ones
+        Predicted inliers (zeros) and outliers (ones) by prescreening model
+    Y : list or array of floats
+        All measurements values
+    cmap : colormap code
+        Color map code used in matplotlib 
+    Returns
+    -------
+    out_outlier : list of ints
+        Indices of experiments that is outlier in both true values and predictions
+    in_outlier : list of ints
+        Indices of experiments that is outlier in true values but inlier in predictions
+    out_inlier : list of ints 
+        Indices of experiments that is inlier in true values but outlier in predictions 
+    in_inlier : list of ints 
+        Indices of experiments that is inlier in both true and predictions 
+    """
     outlier = np.array([k for k, x in enumerate(pred_labels) if x == 1])
     inlier = np.array([k for k, x in enumerate(pred_labels) if x == 0])
     out_outlier = outlier[[
@@ -59,6 +81,16 @@ def plot_cm(true_labels, pred_labels, Y=None, cmap=None):
 
 
 def plot_hist(X, Y=None, mode='count'):
+    """Plot the histogram of experiments with measurments
+    Parameters
+    ----------
+    X : ndarray (n_training_samples, feature_size) of floats
+        Current set of experimental designs.
+    Y : list or array of floats
+        All measurements values
+    mode : str 
+        Plotting mode. Must be 'count' or 'measurements'
+    """
     if Y is None and mode == 'measurement':
         warnings.warn(
             "'measurement' plotting mode require to have experimental measurement values Y"
