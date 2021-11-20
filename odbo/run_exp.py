@@ -14,6 +14,37 @@ def bo_design(X,
               batch_size=1,
               min_inferred_noise_level=1e-4,
               verbose=False):
+    """Run experimental design using BO
+    Parameters
+    ----------
+    X : pyTorch tensor with a shape of (n_training_samples, feature_size) of floats
+        Current set of experimental design after featurziation. 
+    Y : pyTorch tensor with a shape of (n_training_samples, 1) of floats
+        Current measurements using X experimental design. 
+    X_pending : pyTorch tensor with a shape of (n_pending_samples, feature_size) of floats
+        Current search space of experimental design after featurziation. 
+    gp_method : str, default='gp_regression'
+        Regression method used in this run. Must be 'gp_regression' or 'robust_regression'
+    batch_size : int, default=1
+        Number of next experiments to be added
+    min_inferred_noise_level : float, default=1e-4
+        Minimum value of added noises to kernel 
+    verbose : boolean, default=False
+        Print out the details of selcted experiments
+    Returns
+    -------
+    X_next : pyTorch tensor with a shape of (batch_size, feature_size) of floats
+        Selected experiments by BO.
+    acq_value : pyTorch tensor with a shape of of shape (batch_size,) of floats
+        Acqusition values for the selected experiments
+    next_exp_id : list of indices of length of batch_size
+        Indices of selected X with length of batch_size in pending X 
+    References
+    ----------
+    M. Balandat, B. Karrer, D. R. Jiang, S. Daulton, B. Letham, A. G. Wilson, 
+    and E. Bakshy. BoTorch: A Framework for Efficient Monte-Carlo Bayesian 
+    Optimization. Advances in Neural Information Processing Systems 33, 2020.
+    """
     from .bo import generate_batch
     X_norm, Y_norm, X_pending_norm, stats = normalize_data(
         X, Y, X_pending=X_pending)
@@ -58,13 +89,14 @@ def bo_design(X,
                 if torch.equal(X_next[j:j + 1, :].detach(),
                                X_pending_norm[i:i + 1, :].detach()):
                     tonext.append(i)
-            if len(tonext) > 1: 
+            if len(tonext) > 1:
                 tonext = [random.choice(tonext)]
             next_exp_id.extend(tonext)
-            
+
         if verbose == True:
-            print("Next experiment to pick: ",X_next.detach().numpy(),
-                  "Acqusition value: ",acq_value.detach().numpy())
+            print("Next experiment to pick: ",
+                  X_next.detach().numpy(), "Acqusition value: ",
+                  acq_value.detach().numpy())
 
     return X_next, acq_value, next_exp_id
 
@@ -78,6 +110,42 @@ def turbo_design(state,
                  batch_size=1,
                  min_inferred_noise_level=1e-4,
                  verbose=False):
+    """Run experimental design using TuRBO
+    Parameters
+    ----------
+    state : TurboState
+        Current state of TuRBO to determine the trust lengths
+    X : pyTorch tensor with a shape of (n_training_samples, feature_size) of floats
+        Current set of experimental design after featurziation. 
+    Y : pyTorch tensor with a shape of (n_training_samples, 1) of floats
+        Current measurements using X experimental design. 
+    n_trust_regions: int, default=1
+        Number of trust regions used in TuRBO. m value in TuRBO-m is the same as this
+        n_trust_regions. Default is n_trust_regions=1 (TuRBO-1)
+    X_pending : pyTorch tensor with a shape of (n_pending_samples, feature_size) of floats
+        Current search space of experimental design after featurziation. 
+    gp_method : str, default='gp_regression'
+        Regression method used in this run. Must be 'gp_regression' or 'robust_regression'
+    batch_size : int, default=1
+        Number of next experiments to be added
+    min_inferred_noise_level : float, default=1e-4
+        Minimum value of added noises to kernel 
+    verbose : boolean, default=False
+        Print out the details of selcted experiments
+    Returns
+    -------
+    X_next : pyTorch tensor with a shape of (batch_size, feature_size) of floats
+        Selected experiments by BO.
+    acq_value : pyTorch tensor with a shape of of shape (batch_size,) of floats
+        Acqusition values for the selected experiments
+    next_exp_id : list of indices of length of batch_size
+        Indices of selected X with length of batch_size in pending X 
+    References
+    ----------
+    M. Balandat, B. Karrer, D. R. Jiang, S. Daulton, B. Letham, A. G. Wilson, 
+    and E. Bakshy. BoTorch: A Framework for Efficient Monte-Carlo Bayesian 
+    Optimization. Advances in Neural Information Processing Systems 33, 2020.
+    """
     from .turbo import generate_batch
     X_norm, Y_norm, X_pending_norm, stats = normalize_data(
         X, Y, X_pending=X_pending)
@@ -122,13 +190,16 @@ def turbo_design(state,
             next_exp_id_m = []
             for i in range(X_pending.shape[0]):
                 for j in range(batch_size):
-                    if torch.equal(X_next[t, j, :].detach().reshape(1, X_pending_norm.shape[1]),
-                                   X_pending_norm[i:i + 1, :].detach()):
+                    if torch.equal(
+                            X_next[t, j, :].detach().reshape(
+                                1, X_pending_norm.shape[1]),
+                            X_pending_norm[i:i + 1, :].detach()):
                         next_exp_id_m.append(i)
             next_exp_id.append(next_exp_id_m)
         if verbose == True:
-            print("Next experiment to pick: ", X_next.detach().numpy(),
-                  "Acqusition value: ", acq_value.detach().numpy())
+            print("Next experiment to pick: ",
+                  X_next.detach().numpy(), "Acqusition value: ",
+                  acq_value.detach().numpy())
         next_exp_id = np.vstack(next_exp_id)
 
     return X_next, acq_value, next_exp_id
