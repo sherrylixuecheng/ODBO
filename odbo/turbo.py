@@ -190,6 +190,9 @@ def generate_batch(
         X_next_m = torch.zeros((n_trust_regions, batch_size, dim),
                                dtype=dtype,
                                device=device)
+        acq_value = torch.zeros((n_trust_regions, batch_size),
+                               dtype=dtype,
+                               device=device)
         for t in range(n_trust_regions):
             if acqfn == "ei":
                 acq = acqf.monte_carlo.qExpectedImprovement(
@@ -204,7 +207,7 @@ def generate_batch(
                                     0.0, 1.0)
                 tr_ub = torch.clamp(x_center + weights * state.length[t] / 2.0,
                                     0.0, 1.0)
-                X_next_m[t, :, :], acq_value = optimize_acqf(
+                X_next_m[t, :, :], acq_value[t, :] = optimize_acqf(
                     acq,
                     bounds=torch.stack([tr_lb, tr_ub]),
                     q=batch_size,
@@ -212,7 +215,7 @@ def generate_batch(
                     raw_samples=raw_samples,
                     **kwagrs)
             else:
-                X_next_m[t, :, :], acq_value = optimize_acqf_discrete(
+                X_next_m[t, :, :], acq_value[t, :] = optimize_acqf_discrete(
                     acq,
                     choices=X_pending,
                     q=batch_size,
