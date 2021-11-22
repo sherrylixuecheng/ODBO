@@ -5,6 +5,7 @@ import torch
 from gpytorch.utils.errors import NanError, NotPSDError
 from .regressions import GPRegression, RobustRegression
 from .utils import normalize_data
+import warnings
 
 
 def bo_design(X,
@@ -203,3 +204,4 @@ def turbo_design(state,
         next_exp_id = np.vstack(next_exp_id)
 
     return X_next, acq_value, next_exp_id
+
