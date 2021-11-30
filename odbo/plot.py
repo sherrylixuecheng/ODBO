@@ -132,5 +132,12 @@ def plot_hist(X, Y=None, mode='count'):
         axs[i].set_xticklabels(labels=values[:, 0], fontsize=18)
 
 
-def plot_bo(Y, Y_std, methods=None, cmap=None):
-    pass
+def plot_bo(iters, BO_result, method=None, cmap=None):
+    bo, bo_1err = [], []
+    initial_len = BO_result.shape[0]-iters
+    for i in range(iters):
+        bo.append(np.mean(np.max(BO_result[0:initial_len+i], axis = 0)))
+        bo_err.append(np.std(np.max(BO_result[0:initial_len+i], axis = 0)))
+    plt.errorbar(np.arange(iters), bo, yerr=bo_err, label=method)
+
+

@@ -54,7 +54,7 @@ def bo_design(X,
         model, inliers, outliers = RobustRegression(
             X_norm, Y_norm, min_inferred_noise_level=min_inferred_noise_level)
         X_norm, Y_norm = X_norm[inliers, :], Y_norm[inliers]
-        if len(inliers) != len(Y):
+        if len(inliers) != len(Y) and verbose == True:
             print(len(Y) - len(inliers), ' outliers found')
 
     while True:
@@ -155,7 +155,7 @@ def turbo_design(state,
         model, inliers, outliers = RobustRegression(
             X_norm, Y_norm, min_inferred_noise_level=min_inferred_noise_level)
         X_norm, Y_norm = X_norm[inliers, :], Y_norm[inliers]
-        if len(inliers) != len(Y):
+        if len(inliers) != len(Y) and verbose == True:
             print(len(Y) - len(inliers), ' outliers found')
 
     while True:

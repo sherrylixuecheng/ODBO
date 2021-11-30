@@ -1,5 +1,6 @@
 import numpy as np
 import warnings
+warnings.filterwarnings("ignore")
 from pyod.models.xgbod import XGBOD as xgbod
 
 
