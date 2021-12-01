@@ -59,7 +59,12 @@ def initial_design(X_pending,
     while True:
         if allow_abundance:
             sum_scores = np.sum(
-                np.multiply(pending_scores, abundance_scores), axis=1)
+                np.multiply(
+                    pending_scores,
+                    np.multiply(
+                        np.random.normal(1.0, 0.1, abundance_scores.shape),
+                        abundance_scores)),
+                axis=1)
         else:
             sum_scores = np.sum(pending_scores, axis=1)
         sum_scores[sele_indices] = -np.inf * np.ones(len(sele_indices))
