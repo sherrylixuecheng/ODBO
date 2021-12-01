@@ -218,7 +218,7 @@ def generate_batch(
                 X_diff_ub, X_diff_lb = torch.max(torch.sub(X_pending, tr_ub), 1)[0], torch.min(torch.sub(X_pending, tr_lb), 1)[0]
                 index = np.where(np.logical_and(X_diff_ub <= 0, X_diff_lb>=0))[0]
                 if len(index) == 0:
-                    index = np.arange(X_diff_ub)
+                    index = np.arange(len(X_diff_ub))
                 X_next_m[t, :, :], acq_value[t, :] = optimize_acqf_discrete(
                     acq,
                     choices=X_pending[index, :],
