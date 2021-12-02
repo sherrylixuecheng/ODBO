@@ -22,6 +22,7 @@ class TurboState:
     restart_triggered: bool = False
     """TurboState class 
     """
+
     def __post_init__(self):
         if self.failure_tolerance == float("nan"):
             self.failure_tolerance = math.ceil(
@@ -191,8 +192,8 @@ def generate_batch(
                                dtype=dtype,
                                device=device)
         acq_value = torch.zeros((n_trust_regions, batch_size),
-                               dtype=dtype,
-                               device=device)
+                                dtype=dtype,
+                                device=device)
         for t in range(n_trust_regions):
             if acqfn == "ei":
                 acq = acqf.monte_carlo.qExpectedImprovement(
@@ -203,9 +204,9 @@ def generate_batch(
             if acqfn == "ucb":
                 acq = acqf.monte_carlo.qUpperConfidenceBound(model, 0.1)
             tr_lb = torch.clamp(x_center - weights * state.length[t] / 2.0,
-                                    0.0, 1.0)
+                                0.0, 1.0)
             tr_ub = torch.clamp(x_center + weights * state.length[t] / 2.0,
-                                    0.0, 1.0)
+                                0.0, 1.0)
             if X_pending == None:
                 X_next_m[t, :, :], acq_value[t, :] = optimize_acqf(
                     acq,
@@ -215,10 +216,13 @@ def generate_batch(
                     raw_samples=raw_samples,
                     **kwagrs)
             else:
-                X_diff_ub, X_diff_lb = torch.max(torch.sub(X_pending, tr_ub), 1)[0], torch.min(torch.sub(X_pending, tr_lb), 1)[0]
-                index = np.where(np.logical_and(X_diff_ub <= 0, X_diff_lb>=0))[0]
+                X_diff_ub, X_diff_lb = torch.max(
+                    torch.sub(X_pending, tr_ub), 1)[0], torch.min(
+                        torch.sub(X_pending, tr_lb), 1)[0]
+                index = np.where(
+                    np.logical_and(X_diff_ub <= 0, X_diff_lb >= 0))[0]
                 if len(index) == 0:
-                    index = np.arange(len(X_diff_ub))
+                    index = np.arange(X_pending.shape[0])
                 X_next_m[t, :, :], acq_value[t, :] = optimize_acqf_discrete(
                     acq,
                     choices=X_pending[index, :],
