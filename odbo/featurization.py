@@ -175,12 +175,12 @@ class FewChangeMeasurement(MassiveFeatureTransform):
                 except InputError as err:
                     print('InputError: A wrong experimental variable at ',
                           np.argwhere(np.isnan(transformed_feature)))
-        if n_components is None:
-            n_components = 4 * self._max_change_length
+        if self._n_components is None:
+            self._n_components = 4 * self._max_change_length
         if self._pca is None:
             from sklearn.decomposition import PCA
             self._pca = PCA(
-                n_components=n_components, random_state=self._random_seed)
+                n_components=self._n_components, random_state=self._random_seed)
             self._pca.fit(transformed_feature)
         transformed_feature_pca = self._pca.transform(transformed_feature)
         return transformed_feature, transformed_feature_pca
