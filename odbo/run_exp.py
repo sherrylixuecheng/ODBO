@@ -56,7 +56,7 @@ def bo_design(X,
         X_norm, Y_norm = X_norm[inliers, :], Y_norm[inliers]
         if len(inliers) != len(Y) and verbose == True:
             print(len(Y) - len(inliers), ' outliers found')
-
+        del model, inliers, outliers
     while True:
         try:
             gp_model = GPRegression(
@@ -98,6 +98,7 @@ def bo_design(X,
             print("Next experiment to pick: ",
                   X_next.detach().numpy(), "Acqusition value: ",
                   acq_value.detach().numpy())
+    del gp_model, X_norm, Y_norm, X, Y, X_pending, X_pending_norm
 
     return X_next, acq_value, next_exp_id
 
@@ -157,7 +158,7 @@ def turbo_design(state,
         X_norm, Y_norm = X_norm[inliers, :], Y_norm[inliers]
         if len(inliers) != len(Y) and verbose == True:
             print(len(Y) - len(inliers), ' outliers found')
-
+        del model, inliers, outliers
     while True:
         try:
             gp_model = GPRegression(
@@ -202,6 +203,6 @@ def turbo_design(state,
                   X_next.detach().numpy(), "Acqusition value: ",
                   acq_value.detach().numpy())
         next_exp_id = np.vstack(next_exp_id)
-
+    del gp_model, X_norm, Y_norm, X, Y, X_pending, X_pending_norm
     return X_next, acq_value, next_exp_id
 

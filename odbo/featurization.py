@@ -118,7 +118,7 @@ class FewChangeMeasurement(MassiveFeatureTransform):
                  n_components=None,
                  method='Avg',
                  mode='independent',
-                 random_seed=0):
+                 random_seed = 0):
         """Constructor for the FewChangeMeasurement class.
         Args:
             raw_vars : Input experiments expressed using raw variable names
@@ -141,9 +141,8 @@ class FewChangeMeasurement(MassiveFeatureTransform):
             method=method)
         self._max_change_length = max_change_length
         self._pca = None
-        self._random_seed = random_seed
         self._n_components = n_components
-
+        self._random_seed = random_seed
         if self._max_change_length == None:
             self._max_change_length = 0
             for i in range(1, raw_vars.shape[0]):
@@ -178,9 +177,13 @@ class FewChangeMeasurement(MassiveFeatureTransform):
         if self._n_components is None:
             self._n_components = 4 * self._max_change_length
         if self._pca is None:
-            from sklearn.decomposition import PCA
-            self._pca = PCA(
-                n_components=self._n_components, random_state=self._random_seed)
-            self._pca.fit(transformed_feature)
+            from sklearn.decomposition import IncrementalPCA
+            self._pca = IncrementalPCA(
+                n_components=self._n_components)
+            if raw_vars.shape[0] >=10000:
+                sele_ids = np.random.choice(np.arange(raw_vars.shape[0]), 5000, replace=False)
+            else:
+                sele_ids = np.arange(raw_vars.shape[0])
+            self._pca.partial_fit(transformed_feature[sele_ids , :])
         transformed_feature_pca = self._pca.transform(transformed_feature)
         return transformed_feature, transformed_feature_pca
