@@ -1,5 +1,6 @@
 """Classical (Vanila) Bayesian optimization"""
 
+import numpy as np
 import botorch
 import torch
 import botorch.acquisition as acqf
@@ -98,11 +99,22 @@ def generate_batch(model,
                 raw_samples=raw_samples,
                 **kwargs)
         else:
-            X_next, acq_value = optimize_acqf_discrete(
-                acq,
-                choices=X_pending,
-                q=batch_size,
-                max_batch_size=2048,
-                **kwargs)
+            a = X_pending.split(10240)
+            X_next_temp, acq_value_temp = [], []
+            for i in range(len(a)):
+                x_temp, acq_temp = optimize_acqf_discrete(
+                    acq,
+                    choices=a[i],
+                    q=batch_size,
+                    max_batch_size=2048,
+                    **kwargs)
+                X_next_temp.append(x_temp)
+                acq_value_temp.append(acq_temp)
+            X_next_temp = torch.vstack(X_next_temp)
+            acq_value_temp = torch.hstack(acq_value_temp)
+            sele_next_ids = list(
+                np.argsort(acq_value_temp.detach().numpy())[-batch_size:])
+            X_next, acq_value = X_next_temp[sele_next_ids, :], acq_value_temp[
+                sele_next_ids]
 
     return X_next, acq_value

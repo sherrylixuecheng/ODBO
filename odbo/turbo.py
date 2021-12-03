@@ -223,11 +223,21 @@ def generate_batch(
                     np.logical_and(X_diff_ub <= 0, X_diff_lb >= 0))[0]
                 if len(index) == 0:
                     index = np.arange(X_pending.shape[0])
-                X_next_m[t, :, :], acq_value[t, :] = optimize_acqf_discrete(
-                    acq,
-                    choices=X_pending[index, :],
-                    q=batch_size,
-                    max_batch_size=2048,
-                    **kwargs)
-
+                a = X_pending[index, :].split(10240)
+                X_next_temp, acq_value_temp = [], []
+                for i in range(len(a)):
+                    x_temp, acq_temp = optimize_acqf_discrete(
+                        acq,
+                        choices=a[i],
+                        q=batch_size,
+                        max_batch_size=2048,
+                        **kwargs)
+                    X_next_temp.append(x_temp)
+                    acq_value_temp.append(acq_temp)
+                X_next_temp = torch.vstack(X_next_temp)
+                acq_value_temp = torch.hstack(acq_value_temp)
+                sele_next_ids = list(
+                    np.argsort(acq_value_temp.detach().numpy())[-batch_size:])
+                X_next_m[t, :, :], acq_value[t, :] = X_next_temp[
+                    sele_next_ids, :], acq_value_temp[sele_next_ids]
     return X_next_m, acq_value
