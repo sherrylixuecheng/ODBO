@@ -2,7 +2,7 @@ import numpy as np
 import warnings
 
 
-class MassiveFeatureTransform(object):
+class MeasurementFeatureTransform(object):
     """MassiveFeatureTransform method
     """
 
@@ -105,8 +105,8 @@ class MassiveFeatureTransform(object):
         return transformed_feature
 
 
-class FewChangeMeasurement(MassiveFeatureTransform):
-    """FewChangeMeasurement method
+class ReductionFeatureTransform(MeasurementFeatureTransform):
+    """ReductionFeatureTransform method
     """
 
     def __init__(self,
@@ -119,7 +119,7 @@ class FewChangeMeasurement(MassiveFeatureTransform):
                  method='Avg',
                  mode='independent',
                  random_seed = 0):
-        """Constructor for the FewChangeMeasurement class.
+        """Constructor for the ReductionFeatureTransform class.
         Args:
             raw_vars : Input experiments expressed using raw variable names
             cat_features : Featurizations of different categories of each variable
