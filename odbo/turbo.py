@@ -224,6 +224,7 @@ def generate_batch(
                 if len(index) == 0:
                     index = np.arange(X_pending.shape[0])
                 a = X_pending[index, :].split(10240)
+                del X_pending
                 X_next_temp, acq_value_temp = [], []
                 for i in range(len(a)):
                     x_temp, acq_temp = optimize_acqf_discrete(
@@ -232,6 +233,7 @@ def generate_batch(
                         q=batch_size,
                         max_batch_size=2048,
                         **kwargs)
+                    a[i] = None
                     X_next_temp.append(x_temp)
                     acq_value_temp.append(acq_temp)
                 X_next_temp = torch.vstack(X_next_temp)

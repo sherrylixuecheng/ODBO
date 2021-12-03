@@ -100,6 +100,7 @@ def generate_batch(model,
                 **kwargs)
         else:
             a = X_pending.split(10240)
+            del X_pending
             X_next_temp, acq_value_temp = [], []
             for i in range(len(a)):
                 x_temp, acq_temp = optimize_acqf_discrete(
@@ -110,6 +111,7 @@ def generate_batch(model,
                     **kwargs)
                 X_next_temp.append(x_temp)
                 acq_value_temp.append(acq_temp)
+                a[i] = None
             X_next_temp = torch.vstack(X_next_temp)
             acq_value_temp = torch.hstack(acq_value_temp)
             sele_next_ids = list(
