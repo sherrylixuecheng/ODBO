@@ -38,34 +38,19 @@ class MeasurementFeatureTransform(object):
             for i in range(raw_vars.shape[1]):
                 if mode == 'independent':
                     choice = list(set(raw_vars[:, i]))
-                    categories.append(choice)
-                elif mode == 'correlate':
+                elif mode == 'correlate' or mode == 'rank_assist':
                     choice = list(set(raw_vars.ravel()))
-                    categories.append(choice)
+                categories.append(choice)
 
         self._categories = categories
         if cat_features == None:
             cat_features = []
-            if mode == 'independent':
-                for i in range(raw_vars.shape[1]):
-                    feature_choice = np.empty(len(categories[i]))
-                    for j in range(len(categories[i])):
+            for i in range(raw_vars.shape[1]):
+                feature_choice = np.empty(len(categories[i]))
+                for j in range(len(categories[i])):
+                    if mode == 'independent' or mode == 'rank_assist':
                         ids = np.where(raw_vars[:, i] == categories[i][j])[0]
-                        if self._method == 'Avg':
-                            feature_choice[j] = np.mean(Y[ids])
-                        elif self._method == 'Max':
-                            feature_choice[j] = np.max(Y[ids])
-                        elif self._method == 'Min':
-                            feature_choice[j] = np.min(Y[ids])
-                        elif self._method == 'Rank':
-                            feature_choice[j] = np.mean(Y[ids])
-                            feature_choice = np.argsort(feature_choice)
-                    cat_features.append(feature_choice)
-            elif mode == 'correlate':
-                wild_type = raw_vars[0, :]
-                for i in range(raw_vars.shape[1]):
-                    feature_choice = np.empty(len(categories[i]))
-                    for j in range(len(categories[i])):
+                    elif mode == 'correlate':
                         ids = []
                         for t in range(raw_vars.shape[1]):
                             ids.extend(
@@ -73,17 +58,18 @@ class MeasurementFeatureTransform(object):
                                     np.where(
                                         np.logical_and(
                                             raw_vars[:, t] == categories[i][j],
-                                            wild_type[t] == wild_type[i]))[0]))
+                                            raw_vars[0, t] == raw_vars[0, i]))
+                                    [0]))
+                    if len(ids) != 0:
                         if self._method == 'Avg':
                             feature_choice[j] = np.mean(Y[ids])
                         elif self._method == 'Max':
                             feature_choice[j] = np.max(Y[ids])
                         elif self._method == 'Min':
                             feature_choice[j] = np.min(Y[ids])
-                        elif self._method == 'Rank':
-                            feature_choice[j] = np.mean(Y[ids])
-                            feature_choice = np.argsort(feature_choice)
-                    cat_features.append(feature_choice)
+                    else:
+                        feature_choice[j] = j
+                cat_features.append(feature_choice)
 
         self._cat_features = cat_features
 
@@ -105,8 +91,8 @@ class MeasurementFeatureTransform(object):
         return transformed_feature
 
 
-class ReductionFeatureTransform(MeasurementFeatureTransform):
-    """ReductionFeatureTransform method
+class PCAFeatureTransform(MeasurementFeatureTransform):
+    """FewChangeMeasurement method
     """
 
     def __init__(self,
@@ -118,8 +104,8 @@ class ReductionFeatureTransform(MeasurementFeatureTransform):
                  n_components=None,
                  method='Avg',
                  mode='independent',
-                 random_seed = 0):
-        """Constructor for the ReductionFeatureTransform class.
+                 random_seed=0):
+        """Constructor for the FewChangeMeasurement class.
         Args:
             raw_vars : Input experiments expressed using raw variable names
             cat_features : Featurizations of different categories of each variable
@@ -178,12 +164,12 @@ class ReductionFeatureTransform(MeasurementFeatureTransform):
             self._n_components = 4 * self._max_change_length
         if self._pca is None:
             from sklearn.decomposition import IncrementalPCA
-            self._pca = IncrementalPCA(
-                n_components=self._n_components)
-            if raw_vars.shape[0] >=10000:
-                sele_ids = np.random.choice(np.arange(raw_vars.shape[0]), 5000, replace=False)
+            self._pca = IncrementalPCA(n_components=self._n_components)
+            if raw_vars.shape[0] >= 10000:
+                sele_ids = np.random.choice(
+                    np.arange(raw_vars.shape[0]), 5000, replace=False)
             else:
                 sele_ids = np.arange(raw_vars.shape[0])
-            self._pca.partial_fit(transformed_feature[sele_ids , :])
+            self._pca.partial_fit(transformed_feature[sele_ids, :])
         transformed_feature_pca = self._pca.transform(transformed_feature)
         return transformed_feature, transformed_feature_pca
