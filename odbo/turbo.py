@@ -32,9 +32,10 @@ class TurboState:
         self.success_counter = list(np.zeros(self.n_trust_regions))
 
 
-def update_state(state, Y_next):
+def update_state(state, Y_next, dim):
     """Update a TurboState with the optimization running
     """
+    state.dim = dim
     for i in range(state.n_trust_regions):
         if max(Y_next[i, :, :]
                ) > state.best_value + 1e-3 * math.fabs(state.best_value):
