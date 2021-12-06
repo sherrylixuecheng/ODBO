@@ -91,7 +91,7 @@ class MeasurementFeatureTransform(object):
         return transformed_feature
 
 
-class PCAFeatureTransform(MeasurementFeatureTransform):
+class FewFeatureTransform(MeasurementFeatureTransform):
     """FewChangeMeasurement method
     """
 
@@ -101,11 +101,9 @@ class PCAFeatureTransform(MeasurementFeatureTransform):
                  Y=None,
                  categories=None,
                  max_change_length=None,
-                 n_components=None,
                  method='Avg',
-                 mode='independent',
-                 random_seed=0):
-        """Constructor for the FewChangeMeasurement class.
+                 mode='independent'):
+        """Constructor for the FewFeatureTransform class.
         Args:
             raw_vars : Input experiments expressed using raw variable names
             cat_features : Featurizations of different categories of each variable
@@ -118,7 +116,7 @@ class PCAFeatureTransform(MeasurementFeatureTransform):
                    means varibles independently vary, 'correlate' means all the variables 
                    share the same features if the experimental choices are the same
         """
-        super(FewChangeMeasurement, self).__init__(
+        super(FewFeatureTransform, self).__init__(
             raw_vars=raw_vars,
             cat_features=cat_features,
             Y=Y,
@@ -126,9 +124,6 @@ class PCAFeatureTransform(MeasurementFeatureTransform):
             mode=mode,
             method=method)
         self._max_change_length = max_change_length
-        self._pca = None
-        self._n_components = n_components
-        self._random_seed = random_seed
         if self._max_change_length == None:
             self._max_change_length = 0
             for i in range(1, raw_vars.shape[0]):
@@ -136,40 +131,32 @@ class PCAFeatureTransform(MeasurementFeatureTransform):
                 if curr_len >= self._max_change_length:
                     self._max_change_length = curr_len
 
+
     def transform(self, raw_vars):
         """Transform input experiments to standard encodings
         Args:
             raw_vars : Input experiments expressed using raw variable names        
         """
-        for i in range(1, raw_vars.shape[0]):
-            curr_len = len(np.where(raw_vars[0, :] != raw_vars[i, :])[0])
-            if curr_len >= self._max_change_length:
+        for i in range(raw_vars.shape[0]):
+            curr_len = len(np.where(self._raw_vars[0, :] != raw_vars[i, :])[0])
+            if curr_len > self._max_change_length:
                 warnings.warn(
                     "Entire search space changes more varibles per experiment. Need to retransform the training space"
                 )
                 self._max_change_length = curr_len
-                self._pca = None
 
-        transformed_feature = np.ones(raw_vars.shape) * np.nan
-        for i in range(raw_vars.shape[1]):
-            for j in range(len(self._categories[i])):
-                ids = np.where(raw_vars[:, i] == self._categories[i][j])[0]
-                transformed_feature[ids, i] = self._cat_features[i][j]
-                try:
-                    np.isnan(transformed_feature.sum())
-                except InputError as err:
-                    print('InputError: A wrong experimental variable at ',
-                          np.argwhere(np.isnan(transformed_feature)))
-        if self._n_components is None:
-            self._n_components = 4 * self._max_change_length
-        if self._pca is None:
-            from sklearn.decomposition import IncrementalPCA
-            self._pca = IncrementalPCA(n_components=self._n_components)
-            if raw_vars.shape[0] >= 10000:
-                sele_ids = np.random.choice(
-                    np.arange(raw_vars.shape[0]), 5000, replace=False)
+        transformed_feature = np.zeros((raw_vars.shape[0],self._max_change_length*2))
+
+        for i in range(raw_vars.shape[0]):
+            loc_change = np.where(raw_vars[i,:] != self._raw_vars[0,:])[0]
+            if len(loc_change) ==0:
+                transformed_feature[i, self._max_change_length:] =  np.ones(self._max_change_length)*self._Y[0]
             else:
-                sele_ids = np.arange(raw_vars.shape[0])
-            self._pca.partial_fit(transformed_feature[sele_ids, :])
-        transformed_feature_pca = self._pca.transform(transformed_feature)
-        return transformed_feature, transformed_feature_pca
+                transformed_feature[i, 0:len(loc_change)] = loc_change
+                for j in range(len(loc_change)):
+                    feat = np.where(np.array(self._categories[loc_change[j]]) == raw_vars[i,loc_change[j]])[0]
+                    transformed_feature[i, self._max_change_length+j] =  self._cat_features[loc_change[j]][feat]
+                if len(loc_change) != self._max_change_length:
+                    transformed_feature[i, self._max_change_length+len(loc_change):] =  np.ones(self._max_change_length-len(loc_change))*self._Y[0]
+
+        return transformed_feature

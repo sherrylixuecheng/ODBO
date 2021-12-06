@@ -37,7 +37,7 @@ def update_state(state, Y_next):
     """
     for i in range(state.n_trust_regions):
         if max(Y_next[i, :, :]
-               ) > state.best_value + 1e-3 * math.fabs(state.best_value):
+               ) > state.best_value :
             state.success_counter[i] += 1
             state.failure_counter[i] = 0
         else:
