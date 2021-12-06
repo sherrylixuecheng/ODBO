@@ -2,7 +2,7 @@ import numpy as np
 import warnings
 
 
-class MeasurementFeatureTransform(object):
+class MassiveFeatureTransform(object):
     """MassiveFeatureTransform method
     """
 
@@ -91,7 +91,7 @@ class MeasurementFeatureTransform(object):
         return transformed_feature
 
 
-class FewFeatureTransform(MeasurementFeatureTransform):
+class FewFeatureTransform(MassiveFeatureTransform):
     """FewChangeMeasurement method
     """
 
