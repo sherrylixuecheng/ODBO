@@ -43,6 +43,10 @@ def initial_design(X_pending,
     if allow_abundance:
         abundance_scores = abundance(X_pending, choice_list)
     pending_scores = np.zeros(X_pending.shape)
+    for i in range(X_pending.shape[1]):
+        ids = np.where(X_pending[:, i] == '*')[0]
+        if len(ids) != 0:
+            X_pending[ids, i] = X_pending[0, i]
     sele_indices = [0]
     pending_indices = np.arange(1, N)
     pending_scores[sele_indices, :] = -np.inf * np.ones(

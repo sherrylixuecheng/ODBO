@@ -38,9 +38,12 @@ class MassiveFeatureTransform(object):
             for i in range(raw_vars.shape[1]):
                 if mode == 'independent':
                     choice = list(set(raw_vars[:, i]))
-                elif mode == 'correlate' or mode == 'rank_assist':
+                elif mode == 'correlate' or mode == 'hybrid':
                     choice = list(set(raw_vars.ravel()))
                 categories.append(choice)
+        for i in range(self._raw_vars.shape[1]):
+            ids = np.where(self._raw_vars[:, i]== '*')[0]
+            self._raw_vars[ids, i] = self._raw_vars[0, i]
 
         self._categories = categories
         if cat_features == None:
@@ -48,8 +51,18 @@ class MassiveFeatureTransform(object):
             for i in range(raw_vars.shape[1]):
                 feature_choice = np.empty(len(categories[i]))
                 for j in range(len(categories[i])):
-                    if mode == 'independent' or mode == 'rank_assist':
+                    if mode == 'independent' or mode == 'hybrid':
                         ids = np.where(raw_vars[:, i] == categories[i][j])[0]
+                        if len(ids) == 0:
+                            ids = []
+                            for t in range(raw_vars.shape[1]):
+                                ids.extend(
+                                    list(
+                                        np.where(
+                                            np.logical_and(
+                                                raw_vars[:, t] == categories[i][j],
+                                                raw_vars[0, t] == raw_vars[0, i]))
+                                            [0]))
                     elif mode == 'correlate':
                         ids = []
                         for t in range(raw_vars.shape[1]):
@@ -78,6 +91,9 @@ class MassiveFeatureTransform(object):
         Args:
             raw_vars : Input experiments expressed using raw variable names        
         """
+        for i in range(raw_vars.shape[1]):
+            ids = np.where(raw_vars[:, i]== '*')[0]
+            raw_vars[ids, i] = self._raw_vars[0, i]
         transformed_feature = np.ones(raw_vars.shape) * np.nan
         for i in range(raw_vars.shape[1]):
             for j in range(len(self._categories[i])):
@@ -137,6 +153,9 @@ class FewFeatureTransform(MassiveFeatureTransform):
         Args:
             raw_vars : Input experiments expressed using raw variable names        
         """
+        for i in range(raw_vars.shape[1]):
+            ids = np.where(raw_vars[:, i]== '*')[0]
+            raw_vars[ids, i] = self._raw_vars[0, i]
         for i in range(raw_vars.shape[0]):
             curr_len = len(np.where(self._raw_vars[0, :] != raw_vars[i, :])[0])
             if curr_len > self._max_change_length:
@@ -145,7 +164,7 @@ class FewFeatureTransform(MassiveFeatureTransform):
                 )
                 self._max_change_length = curr_len
 
-        transformed_feature = np.zeros((raw_vars.shape[0],self._max_change_length*2))
+        transformed_feature = -np.ones((raw_vars.shape[0],self._max_change_length*2))
 
         for i in range(raw_vars.shape[0]):
             loc_change = np.where(raw_vars[i,:] != self._raw_vars[0,:])[0]
