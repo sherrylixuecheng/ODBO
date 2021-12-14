@@ -14,6 +14,7 @@ def bo_design(X,
               gp_method='gp_regression',
               batch_size=1,
               min_inferred_noise_level=1e-4,
+              acqfn = 'ei',
               verbose=False):
     """Run experimental design using BO
     Parameters
@@ -30,6 +31,8 @@ def bo_design(X,
         Number of next experiments to be added
     min_inferred_noise_level : float, default=1e-4
         Minimum value of added noises to kernel 
+    acqfn : str, default='ei'
+        Acqusition function used
     verbose : boolean, default=False
         Print out the details of selcted experiments
     Returns
@@ -80,7 +83,8 @@ def bo_design(X,
         X=X_norm,
         Y=Y_norm,
         batch_size=batch_size,
-        X_pending=X_pending_norm)
+        X_pending=X_pending_norm,
+        acqfn=acqfn)
     next_exp_id = []
 
     del gp_model, X_norm, Y_norm, X, Y, X_pending
@@ -112,6 +116,7 @@ def turbo_design(state,
                  gp_method='gp_regression',
                  batch_size=1,
                  min_inferred_noise_level=1e-4,
+                 acqfn = 'ei',
                  verbose=False):
     """Run experimental design using TuRBO
     Parameters
@@ -133,6 +138,8 @@ def turbo_design(state,
         Number of next experiments to be added
     min_inferred_noise_level : float, default=1e-4
         Minimum value of added noises to kernel 
+    acqfn : str, default='ei'
+        Acqusition function used 
     verbose : boolean, default=False
         Print out the details of selcted experiments
     Returns
@@ -185,7 +192,8 @@ def turbo_design(state,
         Y=Y_norm,
         n_trust_regions=n_trust_regions,
         batch_size=batch_size,
-        X_pending=X_pending_norm)
+        X_pending=X_pending_norm,
+        acqfn=acqfn)
     next_exp_id = []
     del gp_model, X_norm, Y_norm, X, Y, X_pending
 
