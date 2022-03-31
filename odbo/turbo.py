@@ -130,6 +130,8 @@ def generate_batch(
     x_center = X[Y.argmax(), :].clone()
     weights = model.covar_module.base_kernel.lengthscale.squeeze().detach()
     weights = weights / weights.mean()
+    if weights == 1:
+       weights = torch.tensor([1])
     weights = weights / torch.prod(weights.pow(1.0 / len(weights)))
     if acqfn == "ts":
         from botorch.generation import MaxPosteriorSampling
