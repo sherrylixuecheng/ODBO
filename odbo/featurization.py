@@ -3,7 +3,7 @@ import warnings
 
 
 class MassiveFeatureTransform(object):
-    """MassiveFeatureTransform method
+    """MassiveFeatureTransform method for saturation mutagenesis at k positions
     """
 
     def __init__(self,
@@ -108,7 +108,7 @@ class MassiveFeatureTransform(object):
 
 
 class FewFeatureTransform(MassiveFeatureTransform):
-    """FewChangeMeasurement method
+    """FewChangeMeasurement method for non-saturation mutagenesis
     """
 
     def __init__(self,
