@@ -229,7 +229,7 @@ def generate_batch(
                     acq,
                     choices=X_pending[index, :],
                     q=batch_size,
-                    max_batch_size=4096,
+                    max_batch_size=2048,
                     **kwargs)
 
     return X_next_m, acq_value
